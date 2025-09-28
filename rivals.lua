@@ -670,10 +670,19 @@ SwitchCategory = function(categoryName)
     spawn(UpdateCategorySize)
 end
 
--- Menu Toggle
-CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-end)
+-- Menu Toggle (X button disabled)
+-- CloseButton.MouseButton1Click:Connect(function()
+--     MainFrame.Visible = false
+--     
+--     -- Sistema de auto-restart quando menu é fechado
+--     spawn(function()
+--         wait(0.5) -- Aguardar um pouco para garantir que o menu foi fechado
+--         if not MainFrame.Visible then
+--             print("🔄 Menu fechado, executando auto-restart...")
+--             loadstring(game:HttpGet("https://raw.githubusercontent.com/fatalstrikeofc-Blox/roblox/refs/heads/main/rivals.lua"))()
+--         end
+--     end)
+-- end)
 
 -- ESP Functions
 local function CreateESP(player)
@@ -892,21 +901,24 @@ end
 local StickyAimbot = {
     IsActive = false,
     LockedTarget = nil,
-    LockStrength = 0.95, -- Quão "grudento" é o aimbot (0.1 = suave, 0.95 = muito grudento)
-    TargetSwitchDelay = 0.5, -- Tempo antes de trocar de alvo
+    LockStrength = 0.85, -- Reduzido para menos tremor
+    TargetSwitchDelay = 1.0, -- Aumentado para mais estabilidade
     LastTargetSwitch = 0,
     SmoothingBuffer = {},
-    BufferSize = 5,
+    BufferSize = 8, -- Aumentado para mais suavidade
     FOVCircle = nil,
-    PredictionMultiplier = 0.4
+    PredictionMultiplier = 0.2, -- Reduzido para menos oscilação
+    LastAimTime = 0,
+    MinAimInterval = 0.016 -- ~60 FPS máximo para evitar tremor
 }
 
 -- Variáveis para eliminação de tremores
 local AntiShake = {
     LastMousePos = Vector2.new(0, 0),
     MovementHistory = {},
-    HistorySize = 10,
-    StabilizationFactor = 0.8
+    HistorySize = 15, -- Aumentado para mais estabilização
+    StabilizationFactor = 0.9, -- Aumentado para mais suavidade
+    DeadZone = 1.5 -- Zona morta para evitar micro-movimentos
 }
 
 -- Função para criar círculo FOV ultra suave
@@ -1021,6 +1033,13 @@ end
 local function StickyAim(targetPart)
     if not targetPart or not targetPart.Parent then return end
     
+    -- Verificar intervalo mínimo entre aims para evitar tremor
+    local currentTime = tick()
+    if currentTime - StickyAimbot.LastAimTime < StickyAimbot.MinAimInterval then
+        return
+    end
+    StickyAimbot.LastAimTime = currentTime
+    
     local mousePos = UserInputService:GetMouseLocation()
     local targetScreenPos, onScreen = Camera:WorldToViewportPoint(targetPart.Position)
     
@@ -1031,7 +1050,12 @@ local function StickyAim(targetPart)
     local deltaY = targetScreenPos.Y - mousePos.Y
     local distance = math.sqrt(deltaX^2 + deltaY^2)
     
-    -- Sistema de predição simples mas eficaz
+    -- Aplicar zona morta para evitar micro-tremores
+    if distance < AntiShake.DeadZone then
+        return
+    end
+    
+    -- Sistema de predição mais conservador
     local humanoidRootPart = targetPart.Parent:FindFirstChild("HumanoidRootPart")
     if humanoidRootPart then
         local velocity = humanoidRootPart.Velocity
@@ -1048,18 +1072,21 @@ local function StickyAim(targetPart)
     -- Aplicar estabilização anti-tremor
     deltaX, deltaY = StabilizeMovement(deltaX, deltaY)
     
-    -- Sistema grudento - quanto menor a distância, mais grudento fica
+    -- Sistema grudento mais suave - progressivo baseado na distância
     local stickiness = StickyAimbot.LockStrength
-    if distance < 50 then
-        stickiness = math.min(0.98, StickyAimbot.LockStrength + (50 - distance) / 100)
+    if distance < 100 then
+        -- Transição mais suave para o lock
+        local proximityFactor = (100 - distance) / 100
+        stickiness = StickyAimbot.LockStrength + (proximityFactor * 0.1)
+        stickiness = math.min(0.95, stickiness)
     end
     
     -- Movimento ultra suave com sistema grudento
-    local smoothedDeltaX = deltaX * stickiness
-    local smoothedDeltaY = deltaY * stickiness
+    local smoothedDeltaX = deltaX * stickiness * 0.8 -- Reduzido para menos agressividade
+    local smoothedDeltaY = deltaY * stickiness * 0.8
     
     -- Aplicar movimento apenas se significativo (evita micro-tremores)
-    if math.abs(smoothedDeltaX) > 0.5 or math.abs(smoothedDeltaY) > 0.5 then
+    if math.abs(smoothedDeltaX) > 2 or math.abs(smoothedDeltaY) > 2 then
         mousemoverel(smoothedDeltaX, smoothedDeltaY)
     end
     
@@ -1092,13 +1119,21 @@ local FOVCircle = StickyAimbot.FOVCircle
 local aimbotActive = false
 
 Connections.InputBegan = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    -- Menu toggle (always check first, regardless of gameProcessed)
-    if input.KeyCode == Settings.Menu.ToggleKey then
-        MainFrame.Visible = not MainFrame.Visible
-        return
-    end
     
     if gameProcessed then return end
+    
+    -- INSERT key para fazer toggle do menu (minimizar quando aberto, abrir quando minimizado)
+    if input.KeyCode == Enum.KeyCode.Insert then
+        if MainFrame then
+            MainFrame.Visible = not MainFrame.Visible
+            if MainFrame.Visible then
+                print("🔼 Menu aberto com INSERT")
+            else
+                print("🔽 Menu minimizado com INSERT")
+            end
+        end
+        return
+    end
     
     -- Aimbot grudento - ativação melhorada
     if input.UserInputType == Settings.Aimbot.MouseButton and Settings.Aimbot.Enabled then
@@ -1118,7 +1153,7 @@ Connections.InputBegan = UserInputService.InputBegan:Connect(function(input, gam
                 if target then
                     StickyAim(target)
                 end
-                wait(0.005) -- 200 FPS para ultra suavidade
+                wait(0.016) -- 60 FPS para evitar tremor excessivo
             end
         end)
     end
@@ -1229,7 +1264,12 @@ local function CheckGameChange()
     
     -- Verificar se mudou de jogo ou servidor
     if currentGameId ~= AutoExecuteSystem.LastGameId or currentPlaceId ~= AutoExecuteSystem.LastPlaceId then
-        print("🔄 Mudança de jogo detectada! Reiniciando script...")
+        print("🔄 Mudança de jogo detectada! Fechando menu e reiniciando script...")
+        
+        -- Fechar o menu imediatamente quando detectar mudança de jogo
+        if MainFrame then
+            MainFrame.Visible = false
+        end
         
         -- Atualizar IDs
         AutoExecuteSystem.LastGameId = currentGameId
