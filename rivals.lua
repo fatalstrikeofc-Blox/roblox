@@ -1272,7 +1272,7 @@ function RestartScript()
     wait(1)
     
     -- Recarregar o script
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/yourusername/yourrepo/main/RIVALSblox.lua"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/fatalstrikeofc-Blox/roblox/refs/heads/main/rivals.lua"))()
 end
 
 -- Sistema de monitoramento de mudança de jogo
