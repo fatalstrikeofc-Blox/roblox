@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KeyAuth Generator - Sistema de Geração de Keys</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔑 KeyAuth Generator</h1>
+            <p class="subtitle">Sistema de Geração e Gerenciamento de Keys de Autenticação</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total de Keys</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-active">0</div>
+                <div class="stat-label">Keys Ativas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-inactive">0</div>
+                <div class="stat-label">Keys Inativas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-programs">0</div>
+                <div class="stat-label">Programas</div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="card">
+                    <h2>➕ Gerar Nova Key</h2>
+                    <form id="generate-form">
+                        <div class="form-group">
+                            <label for="program-name">Nome do Programa:</label>
+                            <input type="text" id="program-name" required placeholder="Ex: MeuPrograma.exe">
+                        </div>
+                        <div class="form-group">
+                            <label for="key-days">Dias de Validade (opcional):</label>
+                            <input type="number" id="key-days" min="1" placeholder="Deixe vazio para sem expiração">
+                        </div>
+                        <div class="form-group">
+                            <label for="key-notes">Observações (opcional):</label>
+                            <textarea id="key-notes" rows="3" placeholder="Notas sobre esta key..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Gerar Key</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>✅ Validar Key</h2>
+                    <form id="validate-form">
+                        <div class="form-group">
+                            <label for="validate-key">Key:</label>
+                            <input type="text" id="validate-key" required placeholder="XXXX-XXXX-XXXX-XXXX">
+                        </div>
+                        <div class="form-group">
+                            <label for="validate-program">Programa:</label>
+                            <input type="text" id="validate-program" required placeholder="Nome do programa">
+                        </div>
+                        <button type="submit" class="btn btn-success">Validar Key</button>
+                    </form>
+                    <div id="validate-result" class="validate-result"></div>
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 Lista de Keys</h2>
+                        <div class="filter-group">
+                            <input type="text" id="search-input" placeholder="🔍 Buscar por key ou programa...">
+                            <select id="filter-status">
+                                <option value="all">Todas</option>
+                                <option value="active">Ativas</option>
+                                <option value="inactive">Inativas</option>
+                                <option value="expired">Expiradas</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="keys-list" class="keys-list">
+                        <div class="loading">Carregando keys...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,19 @@
+# Configuração para InfinityFree - Node.js
+# Este arquivo ajuda o InfinityFree a rotear corretamente para o Node.js
+
+# Redirecionar todas as requisições para o servidor Node.js
+# (O InfinityFree geralmente faz isso automaticamente, mas este arquivo ajuda)
+
+# Não aplicar regras para arquivos estáticos
+RewriteEngine On
+
+# Se o arquivo ou diretório existe, servir diretamente
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# Para rotas da API, não fazer nada (deixar o Node.js processar)
+# O InfinityFree deve rotear automaticamente para o Node.js
+
+# Para outras rotas, servir index.html (SPA)
+RewriteRule ^(?!api/).*$ index.html [L]
+

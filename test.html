@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Conexão - KeyAuth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .loading { background: #fff3cd; color: #856404; }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #5568d3; }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Teste de Conexão - KeyAuth</h1>
+    
+    <div class="test-box">
+        <h2>1. Teste de API</h2>
+        <button onclick="testAPI()">Testar API /api/stats</button>
+        <div id="api-result"></div>
+    </div>
+    
+    <div class="test-box">
+        <h2>2. Informações do Servidor</h2>
+        <div id="server-info">
+            <p><strong>URL Atual:</strong> <span id="current-url"></span></p>
+            <p><strong>Protocolo:</strong> <span id="protocol"></span></p>
+            <p><strong>Host:</strong> <span id="host"></span></p>
+        </div>
+    </div>
+    
+    <div class="test-box">
+        <h2>3. Checklist</h2>
+        <ul>
+            <li>✅ Verifique se o Node.js está rodando no painel InfinityFree</li>
+            <li>✅ Verifique se o Startup File está configurado como <code>server.js</code></li>
+            <li>✅ Verifique os logs do Node.js no painel</li>
+            <li>✅ Certifique-se de que a porta está correta</li>
+        </ul>
+    </div>
+
+    <script>
+        // Mostrar informações do servidor
+        document.getElementById('current-url').textContent = window.location.href;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('host').textContent = window.location.host;
+        
+        async function testAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '<div class="status loading">⏳ Testando conexão...</div>';
+            
+            try {
+                const response = await fetch('/api/stats');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    const text = await response.text();
+                    throw new Error(`Resposta não é JSON. Recebido: ${text.substring(0, 200)}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="status success">
+                        ✅ <strong>Sucesso!</strong> API está funcionando.
+                    </div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        ❌ <strong>Erro:</strong> ${error.message}
+                    </div>
+                    <p><strong>Possíveis causas:</strong></p>
+                    <ul>
+                        <li>O servidor Node.js não está rodando</li>
+                        <li>As rotas da API não estão configuradas</li>
+                        <li>Problema de conexão com o servidor</li>
+                    </ul>
+                    <p><strong>Como resolver:</strong></p>
+                    <ol>
+                        <li>Acesse o painel do InfinityFree</li>
+                        <li>Vá em <strong>Node.js</strong></li>
+                        <li>Verifique se o app está <strong>Running</strong></li>
+                        <li>Se não estiver, clique em <strong>Start</strong></li>
+                        <li>Verifique os logs para erros</li>
+                    </ol>
+                `;
+            }
+        }
+        
+        // Testar automaticamente ao carregar
+        window.addEventListener('load', () => {
+            setTimeout(testAPI, 1000);
+        });
+    </script>
+</body>
+</html>
+
